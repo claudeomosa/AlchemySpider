@@ -7,7 +7,13 @@ defmodule Scraper do
   @impl Crawly.Spider
   def init(fighter) do
     [crawl_id: name] = fighter
-    [start_urls: ["https://www.ufc.com/athlete/#{name}"]]
+    names = String.split(to_string(name), " ")
+    combinations = generate_combinations(names)
+
+    # Generate start URLs for all combinations
+    start_urls = Enum.map(combinations, fn combo -> "https://www.ufc.com/athlete/#{combo}" end)
+    IO.puts("Start URLs:\n#{Enum.join(start_urls, "\n")}\n")
+    [start_urls: start_urls]
   end
 
   @impl Crawly.Spider
@@ -61,5 +67,18 @@ defmodule Scraper do
     stat_value = Floki.find(stat_elem, ".hero-profile__stat-numb") |> Floki.text()
 
     {stat_name, stat_value}
+  end
+
+  defp generate_combinations(names) do
+    base_combinations =
+      names
+      |> Enum.reduce([], fn name, acc -> acc ++ Enum.map(acc, &(&1 <> "-" <> name)) ++ [name] end)
+
+    reversed_combinations =
+      names
+      |> Enum.reverse()
+      |> Enum.reduce([], fn name, acc -> acc ++ Enum.map(acc, &(&1 <> "-" <> name)) ++ [name] end)
+
+    base_combinations ++ reversed_combinations
   end
 end
